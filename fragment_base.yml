@@ -16,7 +16,7 @@
       include_vars: base_raspbian.yml
       when: ansible_lsb.id == "Raspbian"
   tasks:
-    - name: hostname is in /etc/hosts
+    - name: hostname ("{{ ansible_host }}") is in /etc/hosts
       lineinfile:
         path: /etc/hosts
         regexp: '127.0.1.1 .*{{ ansible_host }}'
@@ -37,7 +37,7 @@
         cache_valid_time: 3600
         state: present
     - include_tasks: autoupdate-Debian.yml    
-    - name: Copy tmux wrapper script
+    - name: "Copy tmux wrapper script pour {{ ansible_user }}"
       copy:
         src: "templates/tm"
         dest: "~{{ ansible_user }}/bin"

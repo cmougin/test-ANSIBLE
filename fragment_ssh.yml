@@ -1,5 +1,5 @@
 # from Thomas Belot received by email on 17.08.2022, run on OVH/Kimsufi server with FAILURE the SUCCESS on 19 July 2024
-# je ne sais pas où il trouve la variable ansible_user…!
+## /!\ pas ré exécuté car semble casser la conf et empecher la reconnexion ultérieure
 # RUNNING HANDLER [reload sshd] **************************************************************************************************************************************************************************************************
 # fatal: [37.187.20.9]: FAILED! => {"changed": false, "msg": "Unable to reload service sshd: Job for ssh.service failed.\nSee \"systemctl status ssh.service\" and \"journalctl -xeu ssh.service\" for details.\n"}
 # PLAY RECAP *********************************************************************************************************************************************************************************************************************

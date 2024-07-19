@@ -7,3 +7,6 @@ https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-w
 
 c’est à cause de WSL qui est trop permissif en matière d’autorisations; ça peut se contourner avec un simple:
 export ANSIBLE_CONFIG=./ansible.cfg
+
+# après la réinitialisation du serveur:
+ssh-keygen -f "~/.ssh/known_hosts" -R "[37.187.20.9]:443"
