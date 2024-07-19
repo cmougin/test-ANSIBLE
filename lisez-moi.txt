@@ -1,0 +1,9 @@
+à defaut le message suivant apparait:
+
+[WARNING]: Ansible is being run in a world writable directory (/mnt/c/Users/fr20340/OneDrive - Worldline/Fichiers de travail/test ANSIBLE), ignoring it as an ansible.cfg source. For more information see
+https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir
+[WARNING]: No inventory was parsed, only implicit localhost is available
+[WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
+
+c’est à cause de WSL qui est trop permissif en matière d’autorisations; ça peut se contourner avec un simple:
+export ANSIBLE_CONFIG=./ansible.cfg
