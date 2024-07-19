@@ -1,0 +1,57 @@
+# from Thomas Belot received by email on 17.08.2022, run on OVH/Kimsufi server with success on 19 July 2024
+# PLAY RECAP ***************************************************************************************************************************************************************************************************
+# 37.187.20.9                : ok=9    changed=6    unreachable=0    failed=1    skipped=1    rescued=0    ignored=0
+# les deux dernières tâches n’ont pas été exécutées car il manque 00logwatch dans le répertoire templates — à voir avec Thomas s’il y a des cron utiles à ajouter
+---
+- name: configuration de base des serveurs
+  hosts: all
+  become: yes
+  vars:
+    security_autoupdate_mail_to: 'mougin.christophe@gmail.com'
+    security_autoupdate_reboot: false
+    security_autoupdate_reboot_time: 03:00
+    security_autoupdate_blacklist: []
+  pre_tasks:
+    - name: Inclusion des variables spécifiques à Raspbian
+      include_vars: base_raspbian.yml
+      when: ansible_lsb.id == "Raspbian"
+  tasks:
+    - name: hostname is in /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: '127.0.1.1 .*{{ ansible_host }}'
+        line: '127.0.1.1        {{ ansible_host }}'
+        create: yes
+        backup: yes
+    - hostname:
+        name: '{{ ansible_host }}'
+      tags: never
+    - name: Ensure UMASK is set
+      lineinfile:
+        path: /etc/login.defs
+        regexp: '^UMASK '
+        line: 'UMASK           027'
+    - name: Install base packages
+      apt:
+        name: ['needrestart', 'etckeeper', 'ufw', 'logwatch', 'logrotate', 'mutt', 'curl', 'wget', 'lynx', 'vim', 'zsh', 'debian-goodies', 'acct', 'findutils', 'file', 'locate', 'lsof', 'lynis', 'sudo','rsync', 'tmux', 'chrony', 'unattended-upgrades']
+        cache_valid_time: 3600
+        state: present
+    - include_tasks: autoupdate-Debian.yml    
+    - name: Copy tmux wrapper script
+      copy:
+        src: "templates/tm"
+        dest: "~{{ ansible_user }}/bin"
+        backup: yes
+    - name: Copy logwatch conf
+      copy:
+        src: "templates/logwatch.conf"
+        dest: "/etc/logwatch/conf"
+        backup: yes
+    - name: Copy weekly logwatch cron
+      copy:
+        src: "templates/00logwatch"
+        dest: "/etc/cron.weekly"
+    - name: Delete daily logwatch cron
+      file:
+        state: absent
+        path: "/etc/cron.daily/00logwatch"

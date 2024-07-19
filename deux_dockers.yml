@@ -1,0 +1,107 @@
+# déploie la configuration RCLONE et BORGMATIC
+---
+- name: déploie la configuration RCLONE et BORGMATIC
+  hosts: all
+
+  vars:
+    racine: /home/christophe
+    borgRepository: "{{ racine }}/borg-repository"
+    config: "{{ racine }}/borg-rclone"
+    mountPoint: "{{ racine }}/mnt"
+    OneDrive: "{{ mount-point }}/OneDrive"
+    OneDriveB: "{{ mount-point }}/OneDriveB"
+  
+  become: true
+
+  tasks:
+    - name: vérifie que le répertoire de destination existe
+      file:
+        path: "{{ racine }}"
+        state: directory
+        mode: 0755
+
+    - name: effectue la synchronisation
+      ansible.posix.synchronize:
+        src: ./arbo/
+        dest: "{{ racine }}"
+        recursive: yes
+        delete: no # avec yes, j’ai tout effacé dans mon home directory… :(
+        rsync_path: rsync # si on ne met pas ça, par défaut il tente un "sudo rsync etc." qui foire
+
+#   docker stop borgmatic && docker rm borgmatic
+# docker run \
+#   --detach --name borgmatic \
+#   -v "/mnt/OneDrive/Personnel/partition et musique/music sandbox:/mnt/source:ro" \
+#   -v /home/christophe/etc/data/repository:/mnt/borg-repository \
+#   -v /home/christophe/etc/data/borgmatic.d:/etc/borgmatic.d/ \
+#   -v /home/christophe/etc/data/.config/borg:/root/.config/borg \
+#   -v /home/christophe/etc/data/.ssh:/root/.ssh \
+#   -v /home/christophe/etc/data/.cache/borg:/root/.cache/borg \
+#   -e TZ=Europe/Paris \
+#   ghcr.io/borgmatic-collective/borgmatic
+    - name: lance un container borgmatic
+      docker_container:
+        name: borgmatic
+        image: ghcr.io/borgmatic-collective/borgmatic:latest
+        state: started
+        restart_policy: no
+        detach: true
+        env:
+          TZ: Europe/Paris
+        volumes:
+          - "{{ mountPoint }}:/mnt/source:ro"
+          - "{{ borgRepository }}:/mnt/borg-repository"
+          - "{{ config }}:/etc/borgmatic.d"
+          - "{{ config }}:/root/.config/borg"
+          - "{{ config }}:/root/.ssh"
+          - "{{ config }}:/root/.cache/borg"
+        #command: borgmatic init --encryption none -v 2
+
+
+# docker stop rclone && docker rm rclone
+# docker run -d \
+#     --name=rclone \
+#     --cap-add SYS_ADMIN \
+#     --device /dev/fuse \
+#     --security-opt apparmor=unconfined \
+#     -v ${DOCKER_ROOT}/home/christophe/.config/rclone:/config \
+#     -v ${DOCKER_ROOT}/home/christophe/etc/data.rclone/log:/log \
+#     -v ${DOCKER_ROOT}/home/christophe/etc/data.rclone/cache:/cache \
+#     -v /mnt/OneDrive:/data:shared \
+#     -e TZ=Europe/Paris \
+#     -e RCLONE_REMOTE_PATH=OneDrive:/\
+#     -e RCLONE_MOUNT_USER_OPTS="--read-only --vfs-cache-mode=full --no-checksum --no-modtime --allow-non-empty" \
+#     wiserain/rclone
+
+    - name: lance un container rclone
+      docker_container:
+        name: rclone
+        image: wiserain/rclone
+        state: started
+        detach: true
+        restart_policy: no
+        env:
+          TZ: Europe/Paris
+          RCLONE_MOUNT_USER_OPTS: --read-only --vfs-cache-mode full --no-modtime --no-checksum --allow-non-empty
+          RCLONE_REMOTE_PATH: OneDrive:/
+        capabilities:
+          - SYS_ADMIN
+        devices:
+          - "/dev/fuse"
+        security_opts:
+          - apparmor:unconfined
+        volumes:
+          - "{{ OneDrive }}:/data:shared"
+          - "{{ OneDriveB }}:/data2:shared"
+          - "{{ config }}:/config"
+          - "{{ config }}:/log"
+          - "{{ config }}:/cache"
+# # Ensuite il faudrait monter OneDriveB par dessus:
+# docker exec -t rclone bash -c "rclone mount OneDriveB: /data2 \
+#  --uid=${PUID:-911} --gid=${PGID:-911} --cache-dir=/cache --use-mmap --allow-other --umask=002 \
+#   --rc  --rc-no-auth  --rc-addr=:5576 --daemon  ${RCLONE_MOUNT_USER_OPTS} "    
+    
+    - name: monter OneDriveB en plus de OneDrive
+      community.docker.docker_container_exec:
+        container: rclone
+        command: "sh -c 'rclone mount OneDriveB: /data2 --uid=911 --gid=911 --cache-dir=/cache --use-mmap --allow-other --umask=002 --rc --rc-no-auth --rc-addr=:5576 --read-only --vfs-cache-mode=full --no-checksum --no-modtime --allow-non-empty > /log/mount-OneDriveB.log 2>&1 &'"

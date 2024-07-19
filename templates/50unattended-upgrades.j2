@@ -1,0 +1,18 @@
+# from Thomas Belot received by email on 17.08.2022, installed on OVH server in August 2024
+Unattended-Upgrade::Automatic-Reboot "{{ security_autoupdate_reboot }}";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ security_autoupdate_reboot_time }}";
+
+{% if security_autoupdate_mail_to %}
+Unattended-Upgrade::Mail "{{ security_autoupdate_mail_to }}";
+{% endif %}
+
+Unattended-Upgrade::Allowed-Origins {
+        "${distro_id} ${distro_codename}-security";
+//      "${distro_id} ${distro_codename}-updates";
+};
+
+Unattended-Upgrade::Package-Blacklist{
+{% for package in security_autoupdate_blacklist %}
+      "{{package}}";
+{% endfor %}
+}

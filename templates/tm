@@ -1,0 +1,11 @@
+# from Thomas Belot received by email on 17.08.2022, installed on OVH server in August 2024
+#!/bin/bash
+if [ "$#" -ne 1 ]; then
+	tmux -u attach || tmux -u
+else
+	if [ "$1" = "ls" ]; then
+		tmux -u ls
+	else
+		tmux -u attach -t "$1" || tmux -u new -s "$1"
+	fi
+fi

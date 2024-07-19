@@ -1,0 +1,37 @@
+# from Thomas Belot received by email on 17.08.2022, run on OVH/Kimsufi server with FAILURE the SUCCESS on 19 July 2024
+# je ne sais pas où il trouve la variable ansible_user…!
+# RUNNING HANDLER [reload sshd] **************************************************************************************************************************************************************************************************
+# fatal: [37.187.20.9]: FAILED! => {"changed": false, "msg": "Unable to reload service sshd: Job for ssh.service failed.\nSee \"systemctl status ssh.service\" and \"journalctl -xeu ssh.service\" for details.\n"}
+# PLAY RECAP *********************************************************************************************************************************************************************************************************************
+# 37.187.20.9                : ok=4    changed=1    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0
+# relancé:
+# PLAY RECAP *********************************************************************************************************************************************************************************************************************
+# 37.187.20.9                : ok=4    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Ensure group "ssh-login" exists
+      group:
+        name: ssh-login
+        state: present
+    - name: Add the user "{{ ansible_user }}" to the SSH and SUDO groups
+      user:
+        name: "{{ ansible_user }}"
+        groups: ssh-login,sudo
+        append: yes
+    - name: Copy ssh config
+      copy:
+        src: "templates/sshd_config"
+        dest: "/etc/ssh/sshd_config"
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      notify:
+        - reload sshd
+  handlers:
+    - name: reload sshd
+      service:
+        name: sshd
+        state: reloaded

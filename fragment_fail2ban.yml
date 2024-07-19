@@ -1,0 +1,64 @@
+# from Thomas Belot received by email on 17.08.2022, run on OVH/Kimsufi server with success on 19 July 2024
+# PLAY RECAP *********************************************************************************************************************************************************************************************************************
+# 37.187.20.9                : ok=4    changed=3    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0 
+---
+- hosts: all
+  become: yes
+  pre_tasks:
+    - name: Inclusion des variables spécifiques à Raspbian
+      include_vars: base_raspbian.yml
+      when: ansible_lsb.id == "Raspbian"
+    - name: Inclusion des variables spécifique aux serveurs scaleway
+      include_vars: base_scaleway.yml
+      when: "'scaleway' in group_names"
+  tasks:
+    - name: Ansible apt install fail2ban
+      apt:
+        name: "fail2ban"
+        cache_valid_time: 3600
+        state: present
+    - name: Update fail2ban configuration
+      ini_file:
+        path: /etc/fail2ban/jail.local
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+        backup: yes
+      with_items:
+        - { section: "sshd", option: "enabled", value: 'true' }
+        - { section: "sshd-ddos", option: "enabled", value: 'true' }
+        - { section: "pam-generic", option: "enabled", value: 'true' }
+        - { section: "pam-generic", option: "banaction", value: 'iptables-allports' }
+      notify:
+        - reload fail2ban
+    - name: Update fail2ban configuration for exim
+      when: "'exim' in group_names"
+      ini_file:
+        path: /etc/fail2ban/jail.local
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+        backup: yes
+      with_items:
+        - { section: "exim", option: "enabled", value: 'true' }
+        - { section: "exim", option: "maxretry", value: '1' }
+        - { section: "exim", option: "bantime", value: '7776000' }
+        - { section: "exim", option: "findtime", value: '3600' }
+        - { section: "exim-spam", option: "enabled", value: 'true' }
+        - { section: "exim-spam", option: "maxretry", value: '1' }
+        - { section: "exim-spam", option: "bantime", value: '7776000' }
+        - { section: "exim-spam", option: "findtime", value: '3600' }
+      notify:
+        - reload fail2ban
+  handlers:
+    - name: reload fail2ban
+      service:
+        name: fail2ban
+        enabled: yes
+        state: reloaded
