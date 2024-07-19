@@ -1,5 +1,5 @@
 # from Thomas Belot received by email on 17.08.2022, run on OVH/Kimsufi server with FAILURE the SUCCESS on 19 July 2024
-## /!\ pas ré exécuté car semble casser la conf et empecher la reconnexion ultérieure
+## /!\ pas ré exécuté car casse la conf SSHD et empeche la reconnexion ultérieure!!
 # RUNNING HANDLER [reload sshd] **************************************************************************************************************************************************************************************************
 # fatal: [37.187.20.9]: FAILED! => {"changed": false, "msg": "Unable to reload service sshd: Job for ssh.service failed.\nSee \"systemctl status ssh.service\" and \"journalctl -xeu ssh.service\" for details.\n"}
 # PLAY RECAP *********************************************************************************************************************************************************************************************************************
@@ -8,6 +8,8 @@
 # PLAY RECAP *********************************************************************************************************************************************************************************************************************
 # 37.187.20.9                : ok=4    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 ---
+
+DOESN’T WORK WITH DEBIAN 12 => DON’T USE
 - hosts: all
   become: yes
   tasks:

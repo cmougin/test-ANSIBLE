@@ -4,12 +4,12 @@
   hosts: all
 
   vars:
-    racine: /home/christophe
+    racine: /home/debian/backup # je décale dans un sous repertoire, car le risque de casser les droits de ~debian empeche toute cnx SSL ensuite
     borgRepository: "{{ racine }}/borg-repository"
     config: "{{ racine }}/borg-rclone"
     mountPoint: "{{ racine }}/mnt"
-    OneDrive: "{{ mount-point }}/OneDrive"
-    OneDriveB: "{{ mount-point }}/OneDriveB"
+    OneDrive: "{{ mountPoint }}/OneDrive"
+    OneDriveB: "{{ mountPoint }}/OneDriveB"
   
   become: true
 
@@ -18,6 +18,8 @@
       file:
         path: "{{ racine }}"
         state: directory
+        owner: debian 
+        group: debian
         mode: 0755
 
     - name: effectue la synchronisation
@@ -27,6 +29,29 @@
         recursive: yes
         delete: no # avec yes, j’ai tout effacé dans mon home directory… :(
         rsync_path: rsync # si on ne met pas ça, par défaut il tente un "sudo rsync etc." qui foire
+
+    - name: remet les droits correctement pour "{{ racine }}"
+      file:
+        path: "{{ racine }}"
+        state: directory
+        owner: debian 
+        group: debian
+        mode: 0755
+
+# curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+# echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+# sudo apt-get update
+# sudo apt-get install docker-ce docker-ce-cli containerd.io    - name: Install packages nécessaires à DOCKER
+    - name: vérifie que la source de paquet pour docker est dans /etc/apt/sources.list.d/docker.list
+      shell: curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      args:
+        creates: /usr/share/keyrings/docker-archive-keyring.gpg
+    - name: installe docker au besoin
+      apt:
+        name: ['apt-transport-https', 'ca-certificates', 'curl', 'gnupg', 'lsb-release', 'docker-ce', 'docker-ce-cli', 'containerd.io']
+        state: present
+        update_cache: yes
+        cache_valid_time: 0
 
 #   docker stop borgmatic && docker rm borgmatic
 # docker run \
