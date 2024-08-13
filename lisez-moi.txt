@@ -10,3 +10,7 @@ export ANSIBLE_CONFIG=./ansible.cfg
 
 # après la réinitialisation du serveur:
 ssh-keygen -f "~/.ssh/known_hosts" -R "[37.187.20.9]:443"
+
+# exemple de run playbook
+ansible-playbook --extra-vars="ansible_become_pass=<…>" -b ./rclone+borgmatic-intoDocker.yml -v
+# si on ne veut pas mettre un passwd, il faut mettre -K pour être invité à le saisir
