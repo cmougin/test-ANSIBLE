@@ -11,9 +11,13 @@
     OneDrive: "{{ mountPoint }}/OneDrive"
     OneDriveB: "{{ mountPoint }}/OneDriveB"
   
+  vars_files:
+    - "./vault/rclone.conf (secrets - crypted vault)"  # Référence au fichier chiffré
+
   become: true
 
   tasks:
+    
     - name: vérifie que le répertoire de destination existe
       file:
         path: "{{ racine }}"
@@ -28,7 +32,12 @@
         dest: "{{ racine }}"
         recursive: yes
         delete: no # avec yes, j’ai tout effacé dans mon home directory… :(
-        rsync_path: rsync # si on ne met pas ça, par défaut il tente un "sudo rsync etc." qui foire
+        #rsync_path: rsync # si on ne met pas ça, par défaut il tente un "sudo rsync etc." qui foire #mis en commentaire finalement pour forcer l’écrasement. ça marche au 28/8/2024
+
+    - name: deploie rclone.conf avec les secrets en clair
+      template:
+        src: "templates/rclone.conf"
+        dest: "{{ config }}"
 
     - name: remet les droits correctement pour "{{ racine }}"
       file:
