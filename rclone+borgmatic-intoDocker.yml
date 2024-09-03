@@ -26,7 +26,7 @@
         group: debian
         mode: 0755
 
-    - name: effectue la synchronisation
+    - name: recopie l arborescence sur le serveur distant
       ansible.posix.synchronize:
         src: ./arbo/
         dest: "{{ racine }}"
@@ -62,50 +62,6 @@
         update_cache: yes
         cache_valid_time: 0
 
-#   docker stop borgmatic && docker rm borgmatic
-# docker run \
-#   --detach --name borgmatic \
-#   -v "/mnt/OneDrive/Personnel/partition et musique/music sandbox:/mnt/source:ro" \
-#   -v /home/christophe/etc/data/repository:/mnt/borg-repository \
-#   -v /home/christophe/etc/data/borgmatic.d:/etc/borgmatic.d/ \
-#   -v /home/christophe/etc/data/.config/borg:/root/.config/borg \
-#   -v /home/christophe/etc/data/.ssh:/root/.ssh \
-#   -v /home/christophe/etc/data/.cache/borg:/root/.cache/borg \
-#   -e TZ=Europe/Paris \
-#   ghcr.io/borgmatic-collective/borgmatic
-    - name: lance un container borgmatic
-      docker_container:
-        name: borgmatic
-        image: ghcr.io/borgmatic-collective/borgmatic:latest
-        state: started
-        restart_policy: no
-        detach: true
-        env:
-          TZ: Europe/Paris
-        volumes:
-          - "{{ mountPoint }}:/mnt/source:ro"
-          - "{{ borgRepository }}:/mnt/borg-repository"
-          - "{{ config }}:/etc/borgmatic.d"
-          - "{{ config }}:/root/.config/borg"
-          - "{{ config }}:/root/.ssh"
-          - "{{ config }}:/root/.cache/borg"
-        #command: borgmatic init --encryption none -v 2
-
-
-# docker stop rclone && docker rm rclone
-# docker run -d \
-#     --name=rclone \
-#     --cap-add SYS_ADMIN \
-#     --device /dev/fuse \
-#     --security-opt apparmor=unconfined \
-#     -v ${DOCKER_ROOT}/home/christophe/.config/rclone:/config \
-#     -v ${DOCKER_ROOT}/home/christophe/etc/data.rclone/log:/log \
-#     -v ${DOCKER_ROOT}/home/christophe/etc/data.rclone/cache:/cache \
-#     -v /mnt/OneDrive:/data:shared \
-#     -e TZ=Europe/Paris \
-#     -e RCLONE_REMOTE_PATH=OneDrive:/\
-#     -e RCLONE_MOUNT_USER_OPTS="--read-only --vfs-cache-mode=full --no-checksum --no-modtime --allow-non-empty" \
-#     wiserain/rclone
 
     - name: lance un container rclone
       docker_container:
@@ -139,3 +95,53 @@
       community.docker.docker_container_exec:
         container: rclone
         command: "sh -c 'rclone mount OneDriveB: /data2 --uid=911 --gid=911 --cache-dir=/cache --use-mmap --allow-other --umask=002 --rc --rc-no-auth --rc-addr=:5576 --read-only --vfs-cache-mode=full --no-checksum --no-modtime --allow-non-empty > /log/mount-OneDriveB.log 2>&1 &'"
+#   docker stop borgmatic && docker rm borgmatic
+##sudo docker run --detach --name borgmatic
+##-v /home/debian/backup/mnt/OneDrive:/mnt/source:ro
+##-v /home/debian/backup/borg-repository:/mnt/borg-repository
+##-v /home/debian/backup/borg-rclone:/etc/borgmatic.d/
+##-v /home/debian/backup/borg-rclone:/root/.config/borg
+##-v /home/debian/backup/borg-rclone:/root/.ssh
+##-v /home/debian/backup/borg-rclone:/root/.cache/borg
+##-e TZ=Europe/Paris ghcr.io/borgmatic-collective/borgmatic
+
+    - name: lance un container borgmatic
+      docker_container:
+        name: borgmatic
+        image: ghcr.io/borgmatic-collective/borgmatic:latest
+        state: started
+        restart_policy: no # unless-stopped
+        detach: true
+        env:
+          TZ: Europe/Paris
+        volumes:
+          - "{{ mountPoint }}:/mnt/source:ro"
+          - "{{ borgRepository }}:/mnt/borg-repository"
+          - "{{ config }}:/etc/borgmatic.d"
+          - "{{ config }}:/root/.config/borg"
+          - "{{ config }}:/root/.ssh"
+          - "{{ config }}:/root/.cache/borg"
+#        command: borgmatic init --encryption none -v 2
+
+# modif du 29/08/2024. on va faire en 2 fois car le command dans la task ci dessus fait que le container ne démarre pas (retourne un statut non nul au borgmatic init)
+#    - name: initialise le repository borgmatic au besoin # un init sur un repo déjà existant est réputé non destructif
+#      docker_container:
+#        name: borgmatic  # Nom du conteneur
+#        state: started        # Assurez-vous que le conteneur est en cours d'exécution
+#        detach: true
+#        command: ls #borgmatic init --encryption none -v 2
+
+# docker stop rclone && docker rm rclone
+# docker run -d \
+#     --name=rclone \
+#     --cap-add SYS_ADMIN \
+#     --device /dev/fuse \
+#     --security-opt apparmor=unconfined \
+#     -v ${DOCKER_ROOT}/home/christophe/.config/rclone:/config \
+#     -v ${DOCKER_ROOT}/home/christophe/etc/data.rclone/log:/log \
+#     -v ${DOCKER_ROOT}/home/christophe/etc/data.rclone/cache:/cache \
+#     -v /mnt/OneDrive:/data:shared \
+#     -e TZ=Europe/Paris \
+#     -e RCLONE_REMOTE_PATH=OneDrive:/\
+#     -e RCLONE_MOUNT_USER_OPTS="--read-only --vfs-cache-mode=full --no-checksum --no-modtime --allow-non-empty" \
+#     wiserain/rclone
