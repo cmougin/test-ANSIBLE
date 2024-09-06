@@ -18,7 +18,7 @@ repositories:
 # Keep all archives within this time interval. See "skip_actions" for
 # disabling pruning altogether.
 # Number of daily archives to keep.
-keep_daily: 7
+# keep_daily: 7
 
 # Number of weekly archives to keep.
 keep_weekly: 5
