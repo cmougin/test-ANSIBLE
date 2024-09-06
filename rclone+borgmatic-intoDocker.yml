@@ -82,7 +82,7 @@
         image: wiserain/rclone
         state: started
         detach: true
-        restart_policy: no
+        restart_policy: unless-stopped
         env:
           TZ: Europe/Paris
           RCLONE_MOUNT_USER_OPTS: --read-only --vfs-cache-mode full --no-modtime --no-checksum --allow-non-empty
@@ -123,7 +123,7 @@
         name: borgmatic
         image: ghcr.io/borgmatic-collective/borgmatic:latest
         state: started
-        restart_policy: no # unless-stopped
+        restart_policy: unless-stopped
         detach: true
         env:
           TZ: Europe/Paris
