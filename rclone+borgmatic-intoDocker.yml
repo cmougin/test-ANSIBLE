@@ -148,4 +148,4 @@
       shell: "docker exec -it borgmatic borg init -e none /mnt/borg-repository"
       args:
         executable: /bin/bash
-        ignore_errors: yes  # si le dossier contient déjà un repo initialisé, on ignore
+      ignore_errors: yes  # si le dossier contient déjà un repo initialisé, on ignore
