@@ -42,3 +42,68 @@ keep_monthly: 12
 
 # Number of yearly archives to keep.
 keep_yearly: 2
+
+ntfy:
+    # The topic to publish to. See https://ntfy.sh/docs/publish/
+    # for details.
+    topic: ui6now
+
+    # The address of your self-hosted ntfy.sh instance.
+    server: https://ntfy.sh
+
+    # The username used for authentication.
+    # username: testuser
+
+    # The password used for authentication.
+    # password: fakepassword
+
+    # An ntfy access token to authenticate with instead of
+    # username/password.
+    # access_token: tk_AgQdq7mVBoFD37zQVN29RhuMzNIz2
+
+    start:
+        # The title of the message.
+        title: Borg...
+
+        # The message body to publish.
+        message: Your backups have started.
+
+        # The priority to set.
+        # priority: urgent
+
+        # Tags to attach to the message.
+        tags: borgmatic
+
+    finish:
+        # The title of the message.
+        title: Borg!
+
+        # The message body to publish.
+        message: Your backups were completed successfully.
+
+        # The priority to set.
+        # priority: urgent
+
+        # Tags to attach to the message.
+        tags: borgmatic,+1
+
+    fail:
+        # The title of the message.
+        title: Borg :/
+
+        # The message body to publish.
+        message: Your backups have failed.
+
+        # The priority to set.
+        priority: urgent
+
+        # Tags to attach to the message.
+        tags: borgmatic,-1,skull
+
+    # List of one or more monitoring states to ping for: "start",
+    # "finish", and/or "fail". Defaults to pinging for failure
+    # only.
+    states:
+        - start
+        - finish
+        - fail
